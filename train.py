@@ -70,7 +70,7 @@ def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epoch
                 plt.axis("off")
                 plt.imshow(pred[0].cpu().squeeze(0).numpy(), cmap='gray')
                 plt.show()
-            print(f"Batch {batch_idx}/{len(dataloader)}  | Loss: {loss.item():.6f}")
+            print(f"Epoch: {cur_epoch}  | Batch {batch_idx}/{len(dataloader)}  | Loss: {loss.item():.6f}")
 
     loss_epoch /= len(dataloader)
     lr_epoch = adjust_learning_rate(optimizer, cur_epoch, total_epochs, initial_lr, final_lr)
