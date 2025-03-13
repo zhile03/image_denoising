@@ -1,0 +1,35 @@
+<changelist name="Uncommitted_changes_before_Update_at_13_3_25,_23_57_[Changes]" date="1741881440982" recycled="false" toDelete="true">
+  <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_13_3_25,_23_57_[Changes]/shelved.patch" />
+  <option name="DESCRIPTION" value="Uncommitted changes before Update at 13/3/25, 23:57 [Changes]" />
+  <binary>
+    <option name="BEFORE_PATH" value="checkpoints/checkpoint_2_batch_400.pth" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="checkpoints/checkpoint_0_batch_400.pth" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="checkpoints/checkpoint_1_batch_400.pth" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="checkpoints/checkpoint_3_batch_400.pth" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="checkpoints/checkpoint_0_batch_800.pth" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="test_dataloader/patch.png" />
+    <option name="AFTER_PATH" value="test_dataloader/patch.png" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_13_3_25,_23_57_[Changes]/patch.png" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="checkpoints/checkpoint_2_batch_800.pth" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="test_dataloader/noisy_patch.png" />
+    <option name="AFTER_PATH" value="test_dataloader/noisy_patch.png" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_13_3_25,_23_57_[Changes]/noisy_patch.png" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="checkpoints/checkpoint_1_batch_800.pth" />
+  </binary>
+</changelist>
