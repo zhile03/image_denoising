@@ -56,21 +56,19 @@ def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epoch
         if batch_idx % 400 == 0 and batch_idx > 0:
             save_checkpoints(cur_epoch, batch_idx, opt.checkpoints_dir, model, optimizer)
             with  torch.no_grad():
-                plt.figure(figsize=(10, 5))
-                plt.subplot(1, 3, 1)
-                plt.title("Noisy Image")
-                plt.axis("off")
-                plt.imshow(noisy_patch[0].cpu().squeeze(0).numpy(), cmap='gray')
-                plt.subplot(1, 3, 2)
-                plt.title("Clean Image")
-                plt.axis("off")
-                plt.imshow(clean_patch[0].cpu().squeeze(0).numpy(), cmap='gray')
-                plt.subplot(1, 3, 3)
-                plt.title("Predicted Noise")
-                plt.axis("off")
-                plt.imshow(pred[0].cpu().squeeze(0).numpy(), cmap='gray')
+                fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+                axes[0].imshow(noisy_patch[0].cpu().squeeze(0).numpy(), cmap='gray')
+                axes[0].set_title("Noisy Image")
+                axes[0].axis("off")
+                axes[1].imshow(clean_patch[0].cpu().squeeze(0).numpy(), cmap='gray')
+                axes[1].set_title("Clean Image")
+                axes[1].axis("off")
+                axes[2].imshow(pred[0].cpu().squeeze(0).numpy(), cmap='gray')
+                axes[2].set_title("Predicted Noise")
+                axes[2].axis("off")
+                plt.tight_layout()
                 plt.show()
-            print(f"Epoch: {cur_epoch}  | Batch {batch_idx}/{len(dataloader)}  | Loss: {loss.item():.6f}")
+            print(f"Epoch {cur_epoch+1} | Batch {batch_idx}/{len(dataloader)}  | Loss: {loss.item():.6f}")
 
     loss_epoch /= len(dataloader)
     lr_epoch = adjust_learning_rate(optimizer, cur_epoch, total_epochs, initial_lr, final_lr)
@@ -232,9 +230,13 @@ if __name__ == '__main__':
         valid_loss_epoch, psnr_epoch, pred_HR, gt_list, img_names = test(
             model=model, dataloader=test_dataloader, criteria=criteria, device=device)
         t2 = time.time()
+
+        print("=" * 80)
         print(
-            f"Epoch: {idx+1} | lr: {lr_epoch:.5f} | training loss: {train_loss_epoch:.5f} | "
-            f"validation loss: {valid_loss_epoch:.5f} | PSNR: {psnr_epoch:.3f} | Time: {t2 - t0:.1f}")
+            f"Epoch: {idx+1}/{opt.total_epochs} | LR: {lr_epoch:.5f} | Training Loss: {train_loss_epoch:.5f} | "
+            f"Validation Loss: {valid_loss_epoch:.5f} | PSNR: {psnr_epoch:.3f} dB | Time: {t2 - t0:.1f} seconds")
+        print("=" * 80)
+
         save_checkpoints(idx, len(train_dataloader), opt.checkpoints_dir, model, optimizer)
 
         # store metrics
