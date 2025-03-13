@@ -231,11 +231,11 @@ if __name__ == '__main__':
             model=model, dataloader=test_dataloader, criteria=criteria, device=device)
         t2 = time.time()
 
-        print("=" * 80)
+        print("=" * 90)
         print(
             f"Epoch: {idx+1}/{opt.total_epochs} | LR: {lr_epoch:.5f} | Training Loss: {train_loss_epoch:.5f} | "
             f"Validation Loss: {valid_loss_epoch:.5f} | PSNR: {psnr_epoch:.3f} dB | Time: {t2 - t0:.1f} seconds")
-        print("=" * 80)
+        print("=" * 90)
 
         save_checkpoints(idx, len(train_dataloader), opt.checkpoints_dir, model, optimizer)
 
