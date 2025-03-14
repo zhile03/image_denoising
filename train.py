@@ -53,7 +53,7 @@ def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epoch
         loss_epoch += loss.item()
         # print(loss.item())
 
-        if batch_idx % 400 == 0 and batch_idx > 0:
+        if batch_idx+1 % 400 == 0 and batch_idx > 0:
             save_checkpoints(cur_epoch, batch_idx, opt.checkpoints_dir, model, optimizer)
             with  torch.no_grad():
                 fig, axes = plt.subplots(1, 3, figsize=(12, 4))
@@ -149,12 +149,12 @@ if __name__ == '__main__':
     parser.add_argument('--noise-mean', type=float, default=0, help='')
     parser.add_argument('--noise-std', type=float, default=25, help='')
     parser.add_argument('--num-patches', type=int, default=512, help='')
-    parser.add_argument('--trainset_path', type=str, default='/Users/User/Desktop/Project 2/BSDS500-master/BSDS500/data/images/train', help='')
-    parser.add_argument('--testset_path', type=str, default='/Users/User/Desktop/Project 2/BSD68+Set12', help='')
+    parser.add_argument('--trainset_path', type=str, default='./BSDS500-master/BSDS500/data/images/train', help='')
+    parser.add_argument('--testset_path', type=str, default='./BSD68+Set12', help='')
     parser.add_argument('--total-epochs', type=int, default=50, help='')
     parser.add_argument('--initial-lr', type=float, default=0.1, help='')
     parser.add_argument('--final-lr', type=float, default=1e-04, help='')
-    parser.add_argument('--checkpoints-dir', type=str, default='/Users/User/Desktop/Project 2/checkpoints', help='check for the latest checkpoint')
+    parser.add_argument('--checkpoints-dir', type=str, default='./checkpoints', help='check for the latest checkpoint')
 
     opt = parser.parse_args()
 
