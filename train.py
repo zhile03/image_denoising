@@ -152,7 +152,7 @@ if __name__ == '__main__':
     parser.add_argument('--trainset_path', type=str, default='./BSDS500-master/BSDS500/data/images/train', help='')
     parser.add_argument('--testset_path', type=str, default='./BSD68+Set12', help='')
     parser.add_argument('--total-epochs', type=int, default=50, help='')
-    parser.add_argument('--initial-lr', type=float, default=0.01, help='')
+    parser.add_argument('--initial-lr', type=float, default=0.001, help='')
     parser.add_argument('--final-lr', type=float, default=1e-04, help='')
     parser.add_argument('--checkpoints-dir', type=str, default='./checkpoints', help='check for the latest checkpoint')
 
