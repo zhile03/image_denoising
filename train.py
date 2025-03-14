@@ -155,7 +155,6 @@ if __name__ == '__main__':
     parser.add_argument('--initial-lr', type=float, default=1e-04, help='')
     parser.add_argument('--final-lr', type=float, default=1e-04, help='')
     parser.add_argument('--checkpoints-dir', type=str, default='./checkpoints', help='check for the latest checkpoint')
-
     opt = parser.parse_args()
 
     # device
