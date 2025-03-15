@@ -54,7 +54,7 @@ def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epoch
         # print(loss.item())
 
         if batch_idx+1 % 400 == 0 and batch_idx > 0:
-            save_checkpoints(cur_epoch, batch_idx, opt.checkpoints_dir, model, optimizer)
+            #save_checkpoints(cur_epoch, batch_idx, opt.checkpoints_dir, model, optimizer)
             with  torch.no_grad():
                 fig, axes = plt.subplots(1, 3, figsize=(12, 4))
                 axes[0].imshow(noisy_patch[0].cpu().squeeze(0).numpy(), cmap='gray')
@@ -191,6 +191,7 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=opt.initial_lr, momentum=0.9, weight_decay=0.0001)
 
     # check for the latest checkpoint
+    '''
     checkpoint_files = glob.glob(os.path.join(opt.checkpoints_dir, '*.pth'))
     if checkpoint_files:
         latest_checkpoint = max(checkpoint_files, key=os.path.getctime)
@@ -203,6 +204,7 @@ if __name__ == '__main__':
     else:
         start_epoch, start_batch = 0, 0
         print("No checkpoint found, starting training from scratch.")
+    '''
 
     # dataloader
     train_dataset = DenoisingDataset(image_dir=opt.trainset_path, phase='train', patch_size=opt.patch_size,
@@ -236,7 +238,7 @@ if __name__ == '__main__':
             f"Validation Loss: {valid_loss_epoch:.5f} | PSNR: {psnr_epoch:.3f} dB | Time: {t2 - t0:.1f} seconds")
         print("=" * 90)
 
-        save_checkpoints(idx, len(train_dataloader), opt.checkpoints_dir, model, optimizer)
+        #save_checkpoints(idx, len(train_dataloader), opt.checkpoints_dir, model, optimizer)
 
         # store metrics
         train_losses.append(train_loss_epoch)
