@@ -39,10 +39,9 @@ def adjust_learning_rate(optimizer, epoch, total_epochs, initial_lr, final_lr):
 
 def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epochs, initial_lr, final_lr,
           start_epoch, start_batch):
+    lr_epoch = adjust_learning_rate(optimizer, cur_epoch, total_epochs, initial_lr, final_lr)
     loss_epoch = 0.
     for batch_idx, (noisy_patch, clean_patch, _) in enumerate(dataloader, start=0):
-        if cur_epoch == start_epoch and batch_idx < start_batch:
-            continue
         optimizer.zero_grad()
         noisy_patch, clean_patch = noisy_patch.to(device), clean_patch.to(device)
         pred = model(noisy_patch)
@@ -53,25 +52,14 @@ def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epoch
         loss_epoch += loss.item()
         # print(loss.item())
 
-        if batch_idx+1 % 400 == 0 and batch_idx > 0:
-            #save_checkpoints(cur_epoch, batch_idx, opt.checkpoints_dir, model, optimizer)
-            with  torch.no_grad():
-                fig, axes = plt.subplots(1, 3, figsize=(12, 4))
-                axes[0].imshow(noisy_patch[0].cpu().squeeze(0).numpy(), cmap='gray')
-                axes[0].set_title("Noisy Image")
-                axes[0].axis("off")
-                axes[1].imshow(clean_patch[0].cpu().squeeze(0).numpy(), cmap='gray')
-                axes[1].set_title("Clean Image")
-                axes[1].axis("off")
-                axes[2].imshow(pred[0].cpu().squeeze(0).numpy(), cmap='gray')
-                axes[2].set_title("Predicted Noise")
-                axes[2].axis("off")
-                plt.tight_layout()
-                plt.show()
+        if batch_idx  == 0:
+            cv2.imwrite(f'{epoch}_clear_img.png', clean_patch[0].cpu().squeeze(0).numpy())  # [0, 255] np.uint8, BGR
+
+
             print(f"Epoch {cur_epoch+1} | Batch {batch_idx}/{len(dataloader)}  | Loss: {loss.item():.6f}")
 
     loss_epoch /= len(dataloader)
-    lr_epoch = adjust_learning_rate(optimizer, cur_epoch, total_epochs, initial_lr, final_lr)
+
     return loss_epoch, lr_epoch
 
 
@@ -139,6 +127,7 @@ def plot_metrics(train_losses, valid_losses, psnrs, learning_rates):
 
     plt.tight_layout()
     plt.show()
+    ### NEED TO SAVE THE PLOTS
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -154,7 +143,9 @@ if __name__ == '__main__':
     parser.add_argument('--total-epochs', type=int, default=50, help='')
     parser.add_argument('--initial-lr', type=float, default=1e-04, help='')
     parser.add_argument('--final-lr', type=float, default=1e-04, help='')
-    parser.add_argument('--checkpoints-dir', type=str, default='./checkpoints', help='check for the latest checkpoint')
+    parser.add_argument('--resume', type=bool, default=False, help='')
+    parser.add_argument('--resume_weight', type=str, default=False, help='path to resume weight file if needed')
+    # parser.add_argument('--checkpoints-dir', type=str, default='./checkpoints', help='check for the latest checkpoint')
     opt = parser.parse_args()
 
     # device
@@ -191,20 +182,16 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=opt.initial_lr, momentum=0.9, weight_decay=0.0001)
 
     # check for the latest checkpoint
-    '''
-    checkpoint_files = glob.glob(os.path.join(opt.checkpoints_dir, '*.pth'))
-    if checkpoint_files:
-        latest_checkpoint = max(checkpoint_files, key=os.path.getctime)
-        checkpoint = torch.load(latest_checkpoint)
+    if opt.resume:
+        checkpoint = torch.load(opt.resume_weight, map_location=device)
         start_epoch = checkpoint['epoch']
-        start_batch = checkpoint['batch_idx']
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        print(f"Checkpoint loaded: {latest_checkpoint}")
+        print(f"Checkpoint loaded: {start_epoch}")
     else:
-        start_epoch, start_batch = 0, 0
+        start_epoch = 0
         print("No checkpoint found, starting training from scratch.")
-    '''
+
 
     # dataloader
     train_dataset = DenoisingDataset(image_dir=opt.trainset_path, phase='train', patch_size=opt.patch_size,
@@ -221,12 +208,12 @@ if __name__ == '__main__':
     psnrs = []
     learning_rates = []
 
-    for idx in range(0, opt.total_epochs):
+    for idx in range(start_epoch, opt.total_epochs):
         t0 = time.time()
         train_loss_epoch, lr_epoch = train(model=model, dataloader=train_dataloader, criteria=criteria, device=device,
                                            optimizer=optimizer, cur_epoch=idx, total_epochs=opt.total_epochs,
                                            initial_lr=opt.initial_lr, final_lr=opt.final_lr, start_epoch=start_epoch,
-                                           start_batch=start_batch)
+                                           )
         t1 = time.time()
         valid_loss_epoch, psnr_epoch, pred_HR, gt_list, img_names = test(
             model=model, dataloader=test_dataloader, criteria=criteria, device=device)
@@ -238,6 +225,8 @@ if __name__ == '__main__':
             f"Validation Loss: {valid_loss_epoch:.5f} | PSNR: {psnr_epoch:.3f} dB | Time: {t2 - t0:.1f} seconds")
         print("=" * 90)
 
+        checkpoint_savedir = os.path.join(opt.save_dir, 'checkpoint')
+        os.makedirs(checkpoint_savedir, exist_ok=True)
         #save_checkpoints(idx, len(train_dataloader), opt.checkpoints_dir, model, optimizer)
 
         # store metrics
