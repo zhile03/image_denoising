@@ -222,7 +222,7 @@ if __name__ == '__main__':
     
     results_file = os.path.join(opt.save_dir, 'results.txt')
     with open(results_file, 'w') as f:
-        f.write('Epoch | LR | Training Loss | Validation Loss | PSNR\n')
+        f.write('Epoch | LR | Training Loss | Validation Loss | PSNR | Time\n')
 
     for idx in range(start_epoch, opt.total_epochs):
         t0 = time.time()
@@ -253,7 +253,7 @@ if __name__ == '__main__':
         learning_rates.append(lr_epoch)
         
         with open(results_file, 'a') as f:
-            f.write(f"{idx+1} | {lr_epoch:.5f} | {train_loss_epoch:.5f} | {valid_loss_epoch:.5f} | {psnr_epoch:.3f}\n")
+            f.write(f"{idx+1} | {lr_epoch:.5f} | {train_loss_epoch:.5f} | {valid_loss_epoch:.5f} | {psnr_epoch:.3f} | {t2-t0:.1f}\n")
 
     # plot metrics after training
     plot_metrics(train_losses, valid_losses, psnrs, learning_rates, opt.save_dir)
