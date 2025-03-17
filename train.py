@@ -38,6 +38,11 @@ def adjust_learning_rate(optimizer, epoch, total_epochs, initial_lr, final_lr):
         param_group['lr'] = lr
     return lr
 
+def save_image(img, path):
+    img = img.detach().cpu().numpy()
+    img = np.clip(img*255, 0, 255)
+    img = img.astype(np.uint8)
+    cv2.imwrite(path, img)
 
 def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epochs, initial_lr, final_lr,
           start_epoch, save_dir):
@@ -58,9 +63,10 @@ def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epoch
         # print(loss.item())
 
         if batch_idx  == 0:
-            cv2.imwrite(f'{cur_epoch+1}_noisy_img.png', noisy_patch[0].cpu().squeeze(0).numpy())  # [0, 255] np.uint8, BGR
-            cv2.imwrite(f'{cur_epoch+1}_pred_img.png', pred[0].cpu().squeeze(0).numpy())  # [0, 255] np.uint8, BGR
-            cv2.imwrite(f'{cur_epoch+1}_clear_img.png', clean_patch[0].cpu().squeeze(0).numpy())  # [0, 255] np.uint8, BGR
+            save_image(noisy_patch[0].squeeze(0).detach(), os.path.join(images_dir, f'{cur_epoch+1}_noisy_img.png'))
+            save_image(pred[0].squeeze(0).detach(), os.path.join(images_dir, f'{cur_epoch+1}_pred_img.png'))
+            save_image(clean_patch[0].squeeze(0).detach(), os.path.join(images_dir, f'{cur_epoch+1}_clear_img.png'))
+            
             print(f"Epoch {cur_epoch+1} | Batch {batch_idx}/{len(dataloader)}  | Loss: {loss.item():.6f}")
 
     loss_epoch /= len(dataloader)
@@ -86,12 +92,9 @@ def test(model, dataloader, criteria, device, save_dir):
             psnr_epoch += cal_psnr(pred, clean_patch).item()
             
             # save the images
-            noisy_img = noisy_patch[0].cpu().squeeze(0).numpy()
-            pred_img = pred[0].cpu().squeeze(0).numpy()
-            clear_img = clean_patch[0].cpu().squeeze(0).numpy()
-            cv2.imwrite(os.path.join(valid_folder, imgname[0] + '_noisy.png'), noisy_img)
-            cv2.imwrite(os.path.join(valid_folder, imgname[0] + '_pred.png'), pred_img)
-            cv2.imwrite(os.path.join(valid_folder, imgname[0] + '_clear.png'), clear_img)
+            save_image(noisy_patch[0].squeeze(0).detach(), os.path.join(valid_folder, imgname[0] + '_noisy_img.png'))
+            save_image(pred[0].squeeze(0).detach(), os.path.join(valid_folder, imgname[0] + '_pred_img.png'))
+            save_image(clean_patch[0].squeeze(0).detach(), os.path.join(valid_folder, imgname[0] + '_clear_img.png'))
             
             pred_list.append(pred)
             gt_list.append(clean_patch)
