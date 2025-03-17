@@ -8,6 +8,8 @@ import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 import glob
 import matplotlib.pyplot as plt
+import cv2
+import numpy as np
 from model import DnCNN
 from dataset import DenoisingDataset
 from torch.utils.data import DataLoader
@@ -38,9 +40,12 @@ def adjust_learning_rate(optimizer, epoch, total_epochs, initial_lr, final_lr):
 
 
 def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epochs, initial_lr, final_lr,
-          start_epoch, start_batch):
+          start_epoch, save_dir):
     lr_epoch = adjust_learning_rate(optimizer, cur_epoch, total_epochs, initial_lr, final_lr)
     loss_epoch = 0.
+    images_dir = os.path.join(save_dir, 'images')
+    os.makedirs(images_dir, exist_ok=True)
+    
     for batch_idx, (noisy_patch, clean_patch, _) in enumerate(dataloader, start=0):
         optimizer.zero_grad()
         noisy_patch, clean_patch = noisy_patch.to(device), clean_patch.to(device)
@@ -53,9 +58,9 @@ def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epoch
         # print(loss.item())
 
         if batch_idx  == 0:
-            cv2.imwrite(f'{epoch}_clear_img.png', clean_patch[0].cpu().squeeze(0).numpy())  # [0, 255] np.uint8, BGR
-
-
+            cv2.imwrite(f'{cur_epoch+1}_noisy_img.png', noisy_patch[0].cpu().squeeze(0).numpy())  # [0, 255] np.uint8, BGR
+            cv2.imwrite(f'{cur_epoch+1}_pred_img.png', pred[0].cpu().squeeze(0).numpy())  # [0, 255] np.uint8, BGR
+            cv2.imwrite(f'{cur_epoch+1}_clear_img.png', clean_patch[0].cpu().squeeze(0).numpy())  # [0, 255] np.uint8, BGR
             print(f"Epoch {cur_epoch+1} | Batch {batch_idx}/{len(dataloader)}  | Loss: {loss.item():.6f}")
 
     loss_epoch /= len(dataloader)
@@ -63,12 +68,15 @@ def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epoch
     return loss_epoch, lr_epoch
 
 
-def test(model, dataloader, criteria, device):
+def test(model, dataloader, criteria, device, save_dir):
     loss_epoch = 0.
     psnr_epoch = 0.
     pred_list = []
     gt_list = []
     name_list = []
+    valid_folder = os.path.join(save_dir, 'valid_res')
+    os.makedirs(valid_folder, exist_ok=True)
+    
     with torch.no_grad():
         for noisy_patch, clean_patch, imgname in dataloader:
             noisy_patch, clean_patch = noisy_patch.to(device), clean_patch.to(device)
@@ -76,6 +84,15 @@ def test(model, dataloader, criteria, device):
             loss = criteria(pred, clean_patch)
             loss_epoch += loss.item()
             psnr_epoch += cal_psnr(pred, clean_patch).item()
+            
+            # save the images
+            noisy_img = noisy_patch[0].cpu().squeeze(0).numpy()
+            pred_img = pred[0].cpu().squeeze(0).numpy()
+            clear_img = clean_patch[0].cpu().squeeze(0).numpy()
+            cv2.imwrite(os.path.join(valid_folder, imgname[0] + '_noisy.png'), noisy_img)
+            cv2.imwrite(os.path.join(valid_folder, imgname[0] + '_pred.png'), pred_img)
+            cv2.imwrite(os.path.join(valid_folder, imgname[0] + '_clear.png'), clear_img)
+            
             pred_list.append(pred)
             gt_list.append(clean_patch)
             name_list += imgname
@@ -85,11 +102,10 @@ def test(model, dataloader, criteria, device):
     return loss_epoch, psnr_epoch, pred_list, gt_list, name_list
 
 
-def save_checkpoints(epoch, batch_idx, checkpoints_dir, model, optimizer):
-    checkpoint_path = os.path.join(checkpoints_dir, f'checkpoint_{epoch+1}_batch_{batch_idx}.pth')
+def save_checkpoints(epoch, save_dir, model, optimizer):
+    checkpoint_path = os.path.join(save_dir, f'checkpoint_{epoch+1}.pth')
     torch.save({
         'epoch': epoch,
-        'batch_idx': batch_idx,
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
     }, checkpoint_path)
@@ -126,8 +142,8 @@ def plot_metrics(train_losses, valid_losses, psnrs, learning_rates):
     plt.legend()
 
     plt.tight_layout()
-    plt.show()
-    ### NEED TO SAVE THE PLOTS
+    plt.savefig(os.path.join(opt.save_dir, 'results.png'), dpi=200)
+    plt.close()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -141,11 +157,10 @@ if __name__ == '__main__':
     parser.add_argument('--trainset_path', type=str, default='./BSDS500-master/BSDS500/data/images/train', help='')
     parser.add_argument('--testset_path', type=str, default='./BSD68+Set12', help='')
     parser.add_argument('--total-epochs', type=int, default=50, help='')
-    parser.add_argument('--initial-lr', type=float, default=1e-04, help='')
+    parser.add_argument('--initial-lr', type=float, default=0.1, help='')
     parser.add_argument('--final-lr', type=float, default=1e-04, help='')
-    parser.add_argument('--resume', type=bool, default=False, help='')
-    parser.add_argument('--resume_weight', type=str, default=False, help='path to resume weight file if needed')
-    # parser.add_argument('--checkpoints-dir', type=str, default='./checkpoints', help='check for the latest checkpoint')
+    parser.add_argument('--resume', action='store_true', help='resume training from the latest checkpoint')
+    parser.add_argument('--resume_weight', type=str, default='', help='path to resume weight file if needed')
     opt = parser.parse_args()
 
     # device
@@ -160,17 +175,11 @@ if __name__ == '__main__':
     # create folders to save results
     if os.path.exists(opt.save_dir):
         print(f"Warning: {opt.save_dir} exists, please delete it manually if it is useless.")
-
     os.makedirs(opt.save_dir, exist_ok=True)
-    os.makedirs(opt.checkpoints_dir, exist_ok=True)
 
     # save hyp-parameter
     with open(os.path.join(opt.save_dir, 'hyp.yaml'), 'w') as f:
         yaml.dump(opt, f, sort_keys=False)
-
-    # folder to save the predicted noise in the validation
-    valid_folder = os.path.join(opt.save_dir, 'valid_res')
-    os.makedirs(valid_folder, exist_ok=True)
 
     # create model
     model = DnCNN(channels=1, num_layers=17)
@@ -182,7 +191,7 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=opt.initial_lr, momentum=0.9, weight_decay=0.0001)
 
     # check for the latest checkpoint
-    if opt.resume:
+    if opt.resume and os.path.isfile(opt.resume_weight):
         checkpoint = torch.load(opt.resume_weight, map_location=device)
         start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['model_state_dict'])
@@ -207,16 +216,20 @@ if __name__ == '__main__':
     valid_losses = []
     psnrs = []
     learning_rates = []
+    
+    results_file = os.path.join(opt.save_dir, 'results.txt')
+    with open(results_file, 'w') as f:
+        f.write('Epoch | LR | Training Loss | Validation Loss | PSNR\n')
 
     for idx in range(start_epoch, opt.total_epochs):
         t0 = time.time()
         train_loss_epoch, lr_epoch = train(model=model, dataloader=train_dataloader, criteria=criteria, device=device,
                                            optimizer=optimizer, cur_epoch=idx, total_epochs=opt.total_epochs,
                                            initial_lr=opt.initial_lr, final_lr=opt.final_lr, start_epoch=start_epoch,
-                                           )
+                                           save_dir=opt.save_dir)
         t1 = time.time()
-        valid_loss_epoch, psnr_epoch, pred_HR, gt_list, img_names = test(
-            model=model, dataloader=test_dataloader, criteria=criteria, device=device)
+        valid_loss_epoch, psnr_epoch, pred_list, gt_list, img_names = test(
+            model=model, dataloader=test_dataloader, criteria=criteria, device=device, save_dir=opt.save_dir)
         t2 = time.time()
 
         print("=" * 90)
@@ -227,14 +240,18 @@ if __name__ == '__main__':
 
         checkpoint_savedir = os.path.join(opt.save_dir, 'checkpoint')
         os.makedirs(checkpoint_savedir, exist_ok=True)
-        #save_checkpoints(idx, len(train_dataloader), opt.checkpoints_dir, model, optimizer)
+        
+        save_checkpoints(idx, opt.save_dir, model, optimizer)
 
         # store metrics
         train_losses.append(train_loss_epoch)
         valid_losses.append(valid_loss_epoch)
         psnrs.append(psnr_epoch)
         learning_rates.append(lr_epoch)
+        
+        with open(results_file, 'a') as f:
+            f.write(f"{idx+1} | {lr_epoch:.5f} | {train_loss_epoch:.5f} | {valid_loss_epoch:.5f} | {psnr_epoch:.3f}\n")
 
     # plot metrics after training
-    plot_metrics(train_losses, valid_losses, psnrs, learning_rates)
-
+    plot_metrics(train_losses, valid_losses, psnrs, learning_rates, opt.save_dir)
+    print("Training finished.")
