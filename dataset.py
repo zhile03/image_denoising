@@ -95,7 +95,7 @@ class DenoisingDataset(Dataset):
 
 if __name__ == '__main__':
     os.makedirs('./test_dataloader/', exist_ok=True)
-    trainset = DenoisingDataset(image_dir='/Users/User/Desktop/Project 2/BSDS500-master/BSDS500/data/images/train', phase='train')
+    trainset = DenoisingDataset(image_dir='./BSDS500-master/BSDS500/data/images/train', phase='train')
     dataloader = DataLoader(trainset, batch_size=128, shuffle=True, num_workers=8, pin_memory=True)
 
     noisy_patch, patch, img_name = next(iter(dataloader))

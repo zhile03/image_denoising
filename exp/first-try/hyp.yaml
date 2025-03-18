@@ -1,4 +1,3 @@
-!!python/object:argparse.Namespace
 save_dir: exp/first-try
 batch_size: 128
 num_workers: 8
@@ -11,4 +10,5 @@ testset_path: ./BSD68+Set12
 total_epochs: 50
 initial_lr: 0.01
 final_lr: 0.0001
-checkpoints_dir: ''
+resume: false
+resume_weight: ''

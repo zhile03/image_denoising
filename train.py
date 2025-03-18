@@ -74,7 +74,7 @@ def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epoch
     return loss_epoch, lr_epoch
 
 
-def test(model, dataloader, criteria, device, save_dir):
+def test(model, dataloader, criteria, device, save_dir, epoch):
     loss_epoch = 0.
     psnr_epoch = 0.
     pred_list = []
@@ -84,7 +84,7 @@ def test(model, dataloader, criteria, device, save_dir):
     os.makedirs(valid_folder, exist_ok=True)
     
     with torch.no_grad():
-        for noisy_patch, clean_patch, imgname in dataloader:
+        for batch_idx, (noisy_patch, clean_patch, imgname) in enumerate(dataloader):
             noisy_patch, clean_patch = noisy_patch.to(device), clean_patch.to(device)
             pred = model(noisy_patch)
             loss = criteria(pred, clean_patch)
@@ -92,9 +92,10 @@ def test(model, dataloader, criteria, device, save_dir):
             psnr_epoch += cal_psnr(pred, clean_patch).item()
             
             # save the images
-            save_image(noisy_patch[0].squeeze(0).detach(), os.path.join(valid_folder, imgname[0] + '_noisy_img.png'))
-            save_image(pred[0].squeeze(0).detach(), os.path.join(valid_folder, imgname[0] + '_pred_img.png'))
-            save_image(clean_patch[0].squeeze(0).detach(), os.path.join(valid_folder, imgname[0] + '_clear_img.png'))
+            if batch_idx == 0: 
+                save_image(noisy_patch[0].squeeze(0).detach(), os.path.join(valid_folder, f'epoch_{epoch+1}_noisy_img.png'))
+                save_image(pred[0].squeeze(0).detach(), os.path.join(valid_folder, f'epoch_{epoch+1}_pred_img.png'))
+                save_image(clean_patch[0].squeeze(0).detach(), os.path.join(valid_folder, f'epoch_{epoch+1}_clear_img.png'))
             
             pred_list.append(pred)
             gt_list.append(clean_patch)
@@ -106,7 +107,9 @@ def test(model, dataloader, criteria, device, save_dir):
 
 
 def save_checkpoints(epoch, save_dir, model, optimizer):
-    checkpoint_path = os.path.join(save_dir, f'checkpoint_{epoch+1}.pth')
+    checkpoints_dir = os.path.join(save_dir, 'checkpoints')
+    os.makedirs(checkpoints_dir, exist_ok=True)
+    checkpoint_path = os.path.join(checkpoints_dir, f'checkpoint_{epoch+1}.pth')
     torch.save({
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
@@ -115,7 +118,7 @@ def save_checkpoints(epoch, save_dir, model, optimizer):
     print(f"Checkpoint saved: {checkpoint_path}")
 
 
-def plot_metrics(train_losses, valid_losses, psnrs, learning_rates):
+def plot_metrics(train_losses, valid_losses, psnrs, learning_rates, save_dir):
     epochs = range(1, len(train_losses)+1)
     plt.figure(figsize=(10, 8))
 
@@ -145,7 +148,7 @@ def plot_metrics(train_losses, valid_losses, psnrs, learning_rates):
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig(os.path.join(opt.save_dir, 'results.png'), dpi=200)
+    plt.savefig(os.path.join(save_dir, 'results.png'), dpi=200)
     plt.close()
 
 if __name__ == '__main__':
@@ -160,7 +163,7 @@ if __name__ == '__main__':
     parser.add_argument('--trainset_path', type=str, default='./BSDS500-master/BSDS500/data/images/train', help='')
     parser.add_argument('--testset_path', type=str, default='./BSD68+Set12', help='')
     parser.add_argument('--total-epochs', type=int, default=50, help='')
-    parser.add_argument('--initial-lr', type=float, default=0.1, help='')
+    parser.add_argument('--initial-lr', type=float, default=0.01, help='')
     parser.add_argument('--final-lr', type=float, default=1e-04, help='')
     parser.add_argument('--resume', action='store_true', help='resume training from the latest checkpoint')
     parser.add_argument('--resume_weight', type=str, default='', help='path to resume weight file if needed')
@@ -182,7 +185,7 @@ if __name__ == '__main__':
 
     # save hyp-parameter
     with open(os.path.join(opt.save_dir, 'hyp.yaml'), 'w') as f:
-        yaml.dump(opt, f, sort_keys=False)
+        yaml.dump(vars(opt), f, sort_keys=False)
 
     # create model
     model = DnCNN(channels=1, num_layers=17)
@@ -231,8 +234,9 @@ if __name__ == '__main__':
                                            initial_lr=opt.initial_lr, final_lr=opt.final_lr, start_epoch=start_epoch,
                                            save_dir=opt.save_dir)
         t1 = time.time()
-        valid_loss_epoch, psnr_epoch, pred_list, gt_list, img_names = test(
-            model=model, dataloader=test_dataloader, criteria=criteria, device=device, save_dir=opt.save_dir)
+        valid_loss_epoch, psnr_epoch, pred_list, gt_list, img_names = test(model=model, dataloader=test_dataloader, 
+                                                                           criteria=criteria, device=device, save_dir=opt.save_dir,
+                                                                           epoch=idx)
         t2 = time.time()
 
         print("=" * 90)
@@ -240,9 +244,6 @@ if __name__ == '__main__':
             f"Epoch: {idx+1}/{opt.total_epochs} | LR: {lr_epoch:.5f} | Training Loss: {train_loss_epoch:.5f} | "
             f"Validation Loss: {valid_loss_epoch:.5f} | PSNR: {psnr_epoch:.3f} dB | Time: {t2 - t0:.1f} seconds")
         print("=" * 90)
-
-        checkpoint_savedir = os.path.join(opt.save_dir, 'checkpoint')
-        os.makedirs(checkpoint_savedir, exist_ok=True)
         
         save_checkpoints(idx, opt.save_dir, model, optimizer)
 
