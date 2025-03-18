@@ -6,9 +6,9 @@ patch_size: 40
 noise_mean: 0
 noise_std: 25
 num_patches: 512
-trainset_path: /Users/User/Desktop/Project 2/BSDS500-master/BSDS500/data/images/train
-testset_path: /Users/User/Desktop/Project 2/BSD68+Set12
+trainset_path: ./BSDS500-master/BSDS500/data/images/train
+testset_path: ./BSD68+Set12
 total_epochs: 50
-initial_lr: 0.1
+initial_lr: 0.01
 final_lr: 0.0001
-checkpoints_dir: /Users/User/Desktop/Project 2/checkpoints
+checkpoints_dir: ''

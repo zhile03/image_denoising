@@ -3,18 +3,28 @@
   <option name="DESCRIPTION" value="Uncommitted changes before Update at 13/3/25, 23:57 [Changes]" />
   <binary>
     <option name="BEFORE_PATH" value="checkpoints/checkpoint_2_batch_400.pth" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="checkpoints/checkpoint_0_batch_400.pth" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="checkpoints/checkpoint_1_batch_400.pth" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="checkpoints/checkpoint_3_batch_400.pth" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="checkpoints/checkpoint_0_batch_800.pth" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="test_dataloader/patch.png" />
@@ -23,6 +33,8 @@
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="checkpoints/checkpoint_2_batch_800.pth" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="test_dataloader/noisy_patch.png" />
@@ -31,5 +43,7 @@
   </binary>
   <binary>
     <option name="BEFORE_PATH" value="checkpoints/checkpoint_1_batch_800.pth" />
+    <option name="AFTER_PATH" />
+    <option name="SHELVED_PATH" />
   </binary>
 </changelist>
