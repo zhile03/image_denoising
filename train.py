@@ -153,7 +153,7 @@ def plot_metrics(train_losses, valid_losses, psnrs, learning_rates, save_dir):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--save-dir', type=str, default='exp/first-try', help='')
+    parser.add_argument('--save-dir', type=str, default='exp/second-try', help='')
     parser.add_argument('--batch-size', type=int, default=128, help='batch size for training')
     parser.add_argument('--num-workers', type=int, default=8, help='the number of dataloader workers')
     parser.add_argument('--patch-size', type=int, default=40, help='')

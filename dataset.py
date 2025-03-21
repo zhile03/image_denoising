@@ -20,9 +20,11 @@ def augmentation(img, crop_size):  # custom augmentation function (random crop, 
         img = img[:, ::-1]
     if random.random() < 0.5:  # vflip
         img = img[::-1, :]
-    if random.random() < 0.5:  # rot90
+    # if random.random() < 0.5:  # rot90
         # img = img.transpose(1, 0, 2) # use this if the input is not the grayscale image
-        img = img.transpose(1, 0)
+        # img = img.transpose(1, 0)
+    rotate = random.randint(0, 3)
+    img = np.rot90(img, rotate)
 
     return np.ascontiguousarray(img)
 
@@ -33,10 +35,19 @@ def add_gaussian_noise(img, mean, std):
     noisy_image = np.clip(noisy_image, 0, 1)
     return noisy_image
 
+def add_salt_pepper_noise(img, noise_ratio=0.02):
+    noisy_img = img.copy()
+    h, w = noisy_img.shape[:2]
+    num_noise_pixels = int(noise_ratio * h * w)
+    
+    rows = np.random.randint(0, h, num_noise_pixels)
+    cols = np.random.randint(0, w, num_noise_pixels)
+    noisy_img[rows, cols] = 0 if np.random.rand() < 0.5 else 1
+    return noisy_img
+
 # dataset train test 不通用
 # train: augmentation
 # test: no aug
-
 
 ##### 测试用的模拟数据，没有带噪声的图像，我们是在干净图像上加噪声来模拟输入的
 ##### 测试结果不一致，因为每次的噪声都是随机的
@@ -80,6 +91,12 @@ class DenoisingDataset(Dataset):
         if self.phase == 'train':
             # apply augmentations
             patch = augmentation(img, self.patch_size)  # extract patch
+            noise_type = random.choice(['gaussian', 'salt_pepper'])
+            if noise_type == 'gaussian':
+                noisy_patch = add_gaussian_noise(patch, self.mean, self.sigma)
+            else:
+                noisy_patch = add_salt_pepper_noise(patch, noise_ratio=0.02)
+                
         else:
             patch = img
 
