@@ -21,7 +21,7 @@ def augmentation(img, crop_size):  # custom augmentation function (random crop, 
     if random.random() < 0.5:  # vflip
         img = img[::-1, :]
     if random.random() < 0.5:  # rot90
-        img = img.transpose(1, 0, 2) # use this if the input is not the grayscale image
+        #img = img.transpose(1, 0, 2) # use this if the input is not the grayscale image
         img = img.transpose(1, 0)
     #rotate = random.randint(0, 3)
     #img = np.rot90(img, rotate)
@@ -35,17 +35,6 @@ def add_gaussian_noise(img, mean, std):
     noisy_image = np.clip(noisy_image, 0, 1)
     return noisy_image
 
-'''
-def add_salt_pepper_noise(img, noise_ratio=0.02):
-    noisy_img = img.copy()
-    h, w = noisy_img.shape[:2]
-    num_noise_pixels = int(noise_ratio * h * w)
-    
-    rows = np.random.randint(0, h, num_noise_pixels)
-    cols = np.random.randint(0, w, num_noise_pixels)
-    noisy_img[rows, cols] = 0 if np.random.rand() < 0.5 else 1
-    return noisy_img
-'''
 # dataset train test 不通用
 # train: augmentation
 # test: no aug

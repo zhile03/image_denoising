@@ -45,6 +45,7 @@ def save_image(img, path):
     img = img.astype(np.uint8)
     cv2.imwrite(path, img)
 
+
 def train(model, dataloader, criteria, device, optimizer, cur_epoch, total_epochs, initial_lr, final_lr,
           start_epoch, save_dir):
     lr_epoch = adjust_learning_rate(optimizer, cur_epoch, total_epochs, initial_lr, final_lr)
