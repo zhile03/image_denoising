@@ -20,11 +20,11 @@ def augmentation(img, crop_size):  # custom augmentation function (random crop, 
         img = img[:, ::-1]
     if random.random() < 0.5:  # vflip
         img = img[::-1, :]
-    # if random.random() < 0.5:  # rot90
-        # img = img.transpose(1, 0, 2) # use this if the input is not the grayscale image
-        # img = img.transpose(1, 0)
-    rotate = random.randint(0, 3)
-    img = np.rot90(img, rotate)
+    if random.random() < 0.5:  # rot90
+        img = img.transpose(1, 0, 2) # use this if the input is not the grayscale image
+        img = img.transpose(1, 0)
+    #rotate = random.randint(0, 3)
+    #img = np.rot90(img, rotate)
 
     return np.ascontiguousarray(img)
 
@@ -35,6 +35,7 @@ def add_gaussian_noise(img, mean, std):
     noisy_image = np.clip(noisy_image, 0, 1)
     return noisy_image
 
+'''
 def add_salt_pepper_noise(img, noise_ratio=0.02):
     noisy_img = img.copy()
     h, w = noisy_img.shape[:2]
@@ -44,7 +45,7 @@ def add_salt_pepper_noise(img, noise_ratio=0.02):
     cols = np.random.randint(0, w, num_noise_pixels)
     noisy_img[rows, cols] = 0 if np.random.rand() < 0.5 else 1
     return noisy_img
-
+'''
 # dataset train test 不通用
 # train: augmentation
 # test: no aug
@@ -71,7 +72,7 @@ class DenoisingDataset(Dataset):
             if self.debug:
                 return len(self.image_paths) * 10
             else:
-                return len(self.image_paths) * self.num_patches
+                return len(self.image_paths) * self.num_patches # 400 * 512 = 204800
         else:
             if self.debug:
                 return min(10, len(self.image_paths))
@@ -86,16 +87,14 @@ class DenoisingDataset(Dataset):
         img_name = os.path.basename(img_path)
         img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
 
+        # resize to 180x180 if not already
+        if img.shape != (180, 180):
+            img = cv2.resize(img, (180, 180), interpolation=cv2.INTER_AREA)
         img = img.astype(np.float32) / 255.0  # normalize
 
         if self.phase == 'train':
             # apply augmentations
             patch = augmentation(img, self.patch_size)  # extract patch
-            noise_type = random.choice(['gaussian', 'salt_pepper'])
-            if noise_type == 'gaussian':
-                noisy_patch = add_gaussian_noise(patch, self.mean, self.sigma)
-            else:
-                noisy_patch = add_salt_pepper_noise(patch, noise_ratio=0.02)
                 
         else:
             patch = img
@@ -112,7 +111,7 @@ class DenoisingDataset(Dataset):
 
 if __name__ == '__main__':
     os.makedirs('./test_dataloader/', exist_ok=True)
-    trainset = DenoisingDataset(image_dir='./BSDS500-master/BSDS500/data/images/train', phase='train')
+    trainset = DenoisingDataset(image_dir='./BSDS500-master/train', phase='train')
     dataloader = DataLoader(trainset, batch_size=128, shuffle=True, num_workers=8, pin_memory=True)
 
     noisy_patch, patch, img_name = next(iter(dataloader))
